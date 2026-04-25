@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI MCP Assistant</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            text-align: center;
+        }
+        #chatbox {
+            width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        input {
+            width: 70%;
+            padding: 10px;
+        }
+        button {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chatbox">
+    <h2>AI MCP Assistant</h2>
+    <div id="messages"></div>
+
+    <input type="text" id="input" placeholder="Ask something..." />
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+
+<script>
+
+function formatResponse(res) {
+
+    if (res.msg) {
+        return res.msg;
+    }
+
+    if (res.ticket_id) {
+        return `Ticket Created Successfully<br>
+                Ticket ID: ${res.ticket_id}<br>
+                Status: ${res.status}`;
+    }
+
+    if (res.name && res.department) {
+        return `Employee Details<br>
+                ID: ${res.id}<br>
+                Name: ${res.name}<br>
+                Department: ${res.department}<br>
+                Salary: ₹${res.salary}`;
+    }
+
+    if (res.total_employees) {
+        return `Employee Report<br>
+                Total Employees: ${res.total_employees}<br>
+                Departments: ${JSON.stringify(res.department_distribution)}`;
+    }
+
+    if (res.cpu_usage) {
+        return `System Status<br>
+                CPU Usage: ${res.cpu_usage}<br>
+                Status: ${res.status}`;
+    }
+
+    if (Array.isArray(res)) {
+        return res.map(item =>
+            Object.entries(item)
+                .map(([k,v]) => `${k}: ${v}`)
+                .join("<br>")
+        ).join("<hr>");
+    }
+
+    return "No response";
+}
+
+async function sendMessage() {
+    let input = document.getElementById("input");
+    let message = input.value;
+
+    if (!message) return;
+
+    let messagesDiv = document.getElementById("messages");
+
+    messagesDiv.innerHTML = `<p><b>You:</b> ${message}</p>`;
+
+    input.value = "";
+
+    let res = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: message })
+    });
+
+    let data = await res.json();
+
+    // 🔥 USE formatResponse HERE
+    messagesDiv.innerHTML += `<p><b>Bot:</b><br>${formatResponse(data.response)}</p>`;
+}
+
+</script>   
+</body>
+</html>
