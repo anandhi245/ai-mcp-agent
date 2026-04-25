@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>AI MCP Assistant</title>
+    <meta charset="UTF-8">
     <style>
         body {
             font-family: Arial;
@@ -50,6 +51,20 @@ function formatResponse(res) {
         return res.msg;
     }
 
+    // Handle combined responses (employee + ticket)
+    if (res.employee && res.ticket) {
+        const emp = res.employee;
+        const ticket = res.ticket;
+        return `✅ Ticket Created<br>
+                Ticket ID: ${ticket.ticket_id}<br>
+                Status: ${ticket.status}<br><hr>
+                👤 Employee Details<br>
+                ID: ${emp.id}<br>
+                Name: ${emp.name}<br>
+                Department: ${emp.department}<br>
+                Salary: ₹${emp.salary}`;
+    }
+
     if (res.ticket_id) {
         return `Ticket Created Successfully<br>
                 Ticket ID: ${res.ticket_id}<br>
@@ -65,15 +80,26 @@ function formatResponse(res) {
     }
 
     if (res.total_employees) {
+        const deptList = res.department_distribution.map(d => `${d.department}: ${d.count}`).join("<br>");
         return `Employee Report<br>
-                Total Employees: ${res.total_employees}<br>
-                Departments: ${JSON.stringify(res.department_distribution)}`;
+                Total Employees: ${res.total_employees}<br><br>
+                <b>Departments:</b><br>${deptList}`;
     }
 
     if (res.cpu_usage) {
         return `System Status<br>
                 CPU Usage: ${res.cpu_usage}<br>
+                Memory Usage: ${res.memory_usage || 'N/A'}<br>
                 Status: ${res.status}`;
+    }
+
+    // Handle new employee added response
+    if (res.id && res.name && res.department && !res.employee && !res.ticket) {
+        return `✅ Employee Added<br>
+                ID: ${res.id}<br>
+                Name: ${res.name}<br>
+                Department: ${res.department}<br>
+                Salary: ₹${res.salary}`;
     }
 
     if (Array.isArray(res)) {

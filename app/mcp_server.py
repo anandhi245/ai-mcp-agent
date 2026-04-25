@@ -6,6 +6,7 @@ import random
 def get_system_status():
     return {
         "cpu_usage": f"{random.randint(20,80)}%",
+        "memory_usage": f"{random.randint(30,70)}%",
         "status": "Running"
     }
 def get_employee_via_api(emp_id: int):
@@ -69,12 +70,32 @@ def generate_employee_report():
     cursor.execute("SELECT COUNT(*) FROM employees")
     total = cursor.fetchone()[0]
 
-    cursor.execute("SELECT department, COUNT(*) FROM employees GROUP BY department")
+    cursor.execute("""
+        SELECT d.name, COUNT(e.id) 
+        FROM employees e
+        JOIN departments d ON e.department_id = d.id
+        GROUP BY e.department_id
+    """)
     dept_data = cursor.fetchall()
 
     conn.close()
 
     return {
         "total_employees": total,
-        "department_distribution": dept_data
+        "department_distribution": [{"department": row[0], "count": row[1]} for row in dept_data]
     }
+
+
+def add_employee(emp_id: int, name: str, department_id: int, salary: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO employees(id, name, department_id, salary) VALUES (?, ?, ?, ?)",
+        (emp_id, name, department_id, salary)
+    )
+    conn.commit()
+    conn.close()
+
+    # Return the added employee details
+    return get_employee_details(emp_id)
