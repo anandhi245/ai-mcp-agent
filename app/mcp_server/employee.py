@@ -1,14 +1,6 @@
 from app.database import get_connection
-
 from app.api_simulation import get_employee_api
-import random
 
-def get_system_status():
-    return {
-        "cpu_usage": f"{random.randint(20,80)}%",
-        "memory_usage": f"{random.randint(30,70)}%",
-        "status": "Running"
-    }
 def get_employee_via_api(emp_id: int):
     return get_employee_api(emp_id)
 
@@ -35,34 +27,7 @@ def get_employee_details(emp_id: int):
         }
 
     return {"error": "Employee not found"}
-   
 
-# NEW
-def create_ticket(issue: str):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "INSERT INTO tickets(issue, status) VALUES (?, ?)",
-        (issue, "Open")
-    )
-    conn.commit()
-
-    ticket_id = cursor.lastrowid
-    conn.close()
-
-    return {"ticket_id": ticket_id, "status": "Open"}
-
-
-def list_tickets():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM tickets")
-    data = cursor.fetchall()
-    conn.close()
-
-    return data
 def generate_employee_report():
     conn = get_connection()
     cursor = conn.cursor()
@@ -71,7 +36,7 @@ def generate_employee_report():
     total = cursor.fetchone()[0]
 
     cursor.execute("""
-        SELECT d.name, COUNT(e.id) 
+        SELECT d.name, COUNT(e.id)
         FROM employees e
         JOIN departments d ON e.department_id = d.id
         GROUP BY e.department_id
@@ -84,7 +49,6 @@ def generate_employee_report():
         "total_employees": total,
         "department_distribution": [{"department": row[0], "count": row[1]} for row in dept_data]
     }
-
 
 def add_employee(emp_id: int, name: str, department_id: int, salary: int):
     conn = get_connection()
@@ -99,3 +63,23 @@ def add_employee(emp_id: int, name: str, department_id: int, salary: int):
 
     # Return the added employee details
     return get_employee_details(emp_id)
+
+def get_employees_report():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM employees")
+    data = cursor.fetchall()
+    conn.close()
+
+    # Format the data as a list of dictionaries
+    employees = []
+    for row in data:
+        employees.append({
+            "id": row[0],
+            "name": row[1],
+            "department_id": row[2],
+            "salary": row[3]
+        })
+
+    return employees

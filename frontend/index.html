@@ -3,140 +3,251 @@
 <head>
     <title>AI MCP Assistant</title>
     <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: Arial;
-            background: #f4f4f4;
-            text-align: center;
-        }
-        #chatbox {
-            width: 400px;
-            margin: 50px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-        }
-        #messages {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: left;
-        }
-        input {
-            width: 70%;
-            padding: 10px;
-        }
-        button {
-            padding: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="chatbox">
-    <h2>AI MCP Assistant</h2>
-    <div id="messages"></div>
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>🤖 AI MCP Assistant</h1>
+        <p>Your AI-powered employee management bot</p>
+    </div>
 
-    <input type="text" id="input" placeholder="Ask something..." />
-    <button onclick="sendMessage()">Send</button>
+    <div class="chat-messages" id="messages">
+        <div class="message bot">
+            <div class="message-bubble">
+                <div class="response-section">
+                    <div class="response-label">Welcome! 👋</div>
+                    <div class="response-row">
+                        <span class="response-key">I can help you with:</span>
+                    </div>
+                    <div class="response-row">
+                        <span class="response-value">• Get employee details</span>
+                    </div>
+                    <div class="response-row">
+                        <span class="response-value">• Create support tickets</span>
+                    </div>
+                    <div class="response-row">
+                        <span class="response-value">• Add new employees</span>
+                    </div>
+                    <div class="response-row">
+                        <span class="response-value">• View reports & system status</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <button class="quick-btn" onclick="quickAction('employee 1001')">👤 Employee 1001</button>
+        <button class="quick-btn" onclick="quickAction('create ticket need help')">🎫 Create Ticket</button>
+        <button class="quick-btn" onclick="quickAction('report')">📊 Report</button>
+        <button class="quick-btn" onclick="quickAction('system status')">💻 System Status</button>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="input" placeholder="Type your message..." onkeypress="handleKeyPress(event)" />
+        <button onclick="sendMessage()" id="sendBtn">Send</button>
+    </div>
 </div>
 
 
 <script>
 
 function formatResponse(res) {
+    let html = '';
 
-    if (res.msg) {
-        return res.msg;
+    // Error message
+    if (res.error) {
+        return `<span class="error-text">⚠️ ${res.error}</span>`;
     }
 
     // Handle combined responses (employee + ticket)
     if (res.employee && res.ticket) {
         const emp = res.employee;
         const ticket = res.ticket;
-        return `✅ Ticket Created<br>
-                Ticket ID: ${ticket.ticket_id}<br>
-                Status: ${ticket.status}<br><hr>
-                👤 Employee Details<br>
-                ID: ${emp.id}<br>
-                Name: ${emp.name}<br>
-                Department: ${emp.department}<br>
-                Salary: ₹${emp.salary}`;
+        html += `
+            <div class="response-section">
+                <div class="success-badge">✅ Ticket Created</div>
+                <div class="response-row"><span class="response-key">Ticket ID</span><span class="response-value">#${ticket.ticket_id}</span></div>
+                <div class="response-row"><span class="response-key">Issue</span><span class="response-value">${ticket.issue || 'N/A'}</span></div>
+                <div class="response-row"><span class="response-key">Status</span><span class="response-value">${ticket.status}</span></div>
+            </div>
+            <div class="response-section">
+                <div class="response-label">👤 Employee Details</div>
+                <div class="response-row"><span class="response-key">ID</span><span class="response-value">${emp.id}</span></div>
+                <div class="response-row"><span class="response-key">Name</span><span class="response-value">${emp.name}</span></div>
+                <div class="response-row"><span class="response-key">Department</span><span class="response-value">${emp.department}</span></div>
+                <div class="response-row"><span class="response-key">Salary</span><span class="response-value">₹${emp.salary.toLocaleString()}</span></div>
+            </div>`;
+        return html;
     }
 
+    // Ticket created
     if (res.ticket_id) {
-        return `Ticket Created Successfully<br>
-                Ticket ID: ${res.ticket_id}<br>
-                Status: ${res.status}`;
+        html += `
+            <div class="response-section">
+                <div class="success-badge">✅ Ticket Created</div>
+                <div class="response-row"><span class="response-key">Ticket ID</span><span class="response-value">#${res.ticket_id}</span></div>
+                <div class="response-row"><span class="response-key">Issue</span><span class="response-value">${res.issue || 'N/A'}</span></div>
+                <div class="response-row"><span class="response-key">Status</span><span class="response-value">${res.status}</span></div>
+            </div>`;
+        return html;
     }
 
+    // Employee details
     if (res.name && res.department) {
-        return `Employee Details<br>
-                ID: ${res.id}<br>
-                Name: ${res.name}<br>
-                Department: ${res.department}<br>
-                Salary: ₹${res.salary}`;
+        html += `
+            <div class="response-section">
+                <div class="response-label">👤 Employee Details</div>
+                <div class="response-row"><span class="response-key">ID</span><span class="response-value">${res.id}</span></div>
+                <div class="response-row"><span class="response-key">Name</span><span class="response-value">${res.name}</span></div>
+                <div class="response-row"><span class="response-key">Department</span><span class="response-value">${res.department}</span></div>
+                <div class="response-row"><span class="response-key">Salary</span><span class="response-value">₹${res.salary.toLocaleString()}</span></div>
+            </div>`;
+        return html;
     }
 
-    if (res.total_employees) {
-        const deptList = res.department_distribution.map(d => `${d.department}: ${d.count}`).join("<br>");
-        return `Employee Report<br>
-                Total Employees: ${res.total_employees}<br><br>
-                <b>Departments:</b><br>${deptList}`;
+    // Employee report
+    if (res.total_employees !== undefined) {
+        html += `
+            <div class="response-section">
+                <div class="response-label">📊 Employee Report</div>
+                <div class="response-row"><span class="response-key">Total Employees</span><span class="response-value">${res.total_employees}</span></div>
+            </div>
+            <div class="response-section">
+                <div class="response-label">🏢 Departments</div>
+                ${res.department_distribution.map(d => 
+                    `<div class="response-row"><span class="response-key">${d.department}</span><span class="response-value">${d.count} employees</span></div>`
+                ).join('')}
+            </div>`;
+        return html;
     }
 
+    // System status
     if (res.cpu_usage) {
-        return `System Status<br>
-                CPU Usage: ${res.cpu_usage}<br>
-                Memory Usage: ${res.memory_usage || 'N/A'}<br>
-                Status: ${res.status}`;
+        html += `
+            <div class="response-section">
+                <div class="response-label">💻 System Status</div>
+                <div class="response-row"><span class="response-key">CPU Usage</span><span class="response-value">${res.cpu_usage}</span></div>
+                <div class="response-row"><span class="response-key">Memory Usage</span><span class="response-value">${res.memory_usage || 'N/A'}</span></div>
+                <div class="response-row"><span class="response-key">Status</span><span class="response-value">🟢 ${res.status}</span></div>
+            </div>`;
+        return html;
     }
 
-    // Handle new employee added response
+    // Employee added
     if (res.id && res.name && res.department && !res.employee && !res.ticket) {
-        return `✅ Employee Added<br>
-                ID: ${res.id}<br>
-                Name: ${res.name}<br>
-                Department: ${res.department}<br>
-                Salary: ₹${res.salary}`;
+        html += `
+            <div class="response-section">
+                <div class="success-badge">✅ Employee Added</div>
+                <div class="response-row"><span class="response-key">ID</span><span class="response-value">${res.id}</span></div>
+                <div class="response-row"><span class="response-key">Name</span><span class="response-value">${res.name}</span></div>
+                <div class="response-row"><span class="response-key">Department</span><span class="response-value">${res.department}</span></div>
+                <div class="response-row"><span class="response-key">Salary</span><span class="response-value">₹${res.salary.toLocaleString()}</span></div>
+            </div>`;
+        return html;
     }
 
+    // List of tickets
     if (Array.isArray(res)) {
-        return res.map(item =>
-            Object.entries(item)
-                .map(([k,v]) => `${k}: ${v}`)
-                .join("<br>")
-        ).join("<hr>");
+        html += `
+            <div class="response-section">
+                <div class="response-label">🎫 Tickets</div>
+                ${res.map(item => 
+                    `<div class="response-row"><span class="response-key">#${item[0]}</span><span class="response-value">${item[1]} (${item[2]})</span></div>`
+                ).join('')}
+            </div>`;
+        return html;
+    }
+
+    // Default message
+    if (res.msg) {
+        return res.msg;
     }
 
     return "No response";
 }
 
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+
+function quickAction(message) {
+    document.getElementById('input').value = message;
+    sendMessage();
+}
+
 async function sendMessage() {
-    let input = document.getElementById("input");
-    let message = input.value;
+    let input = document.getElementById('input');
+    let message = input.value.trim();
 
     if (!message) return;
 
-    let messagesDiv = document.getElementById("messages");
+    let messagesDiv = document.getElementById('messages');
+    let sendBtn = document.getElementById('sendBtn');
 
-    messagesDiv.innerHTML = `<p><b>You:</b> ${message}</p>`;
+    // Add user message
+    messagesDiv.innerHTML += `
+        <div class="message user">
+            <div class="message-bubble">
+                <div class="message-label">You</div>
+                ${message}
+            </div>
+        </div>`;
 
-    input.value = "";
+    // Clear input and show loading
+    input.value = '';
+    sendBtn.disabled = true;
 
-    let res = await fetch("http://127.0.0.1:8000/chat", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ message: message })
-    });
+    messagesDiv.innerHTML += `
+        <div class="message bot">
+            <div class="message-bubble">
+                <div class="loading">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>`;
 
-    let data = await res.json();
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-    // 🔥 USE formatResponse HERE
-    messagesDiv.innerHTML += `<p><b>Bot:</b><br>${formatResponse(data.response)}</p>`;
+    try {
+        let res = await fetch("http://127.0.0.1:8000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message })
+        });
+
+        let data = await res.json();
+
+        // Remove loading message
+        let loadingMsg = messagesDiv.querySelector('.loading').closest('.message');
+        if (loadingMsg) loadingMsg.remove();
+
+        // Add bot response
+        messagesDiv.innerHTML += `
+            <div class="message bot">
+                <div class="message-bubble">
+                    ${formatResponse(data.response)}
+                </div>
+            </div>`;
+
+    } catch (error) {
+        let loadingMsg = messagesDiv.querySelector('.loading').closest('.message');
+        if (loadingMsg) loadingMsg.remove();
+
+        messagesDiv.innerHTML += `
+            <div class="message bot">
+                <div class="message-bubble">
+                    <span class="error-text">⚠️ Error: Could not connect to server. Make sure it's running!</span>
+                </div>
+            </div>`;
+    }
+
+    sendBtn.disabled = false;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 </script>   
